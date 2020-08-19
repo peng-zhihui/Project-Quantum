@@ -1,0 +1,356 @@
+#
+# Copyright (C) 2015 Google. Inc
+# Written by Simon Glass <sjg@chromium.org>
+#
+# SPDX-License-Identifier:	GPL-2.0+
+#
+
+U-Boot on Rockchip
+==================
+
+There are several repositories available with versions of U-Boot that support
+many Rockchip devices [1] [2].
+
+The current mainline support is experimental only and is not useful for
+anything. It should provide a base on which to build.
+
+So far only support for the RK3288 and RK3036 is provided.
+
+
+Prerequisites
+=============
+
+You will need:
+
+   - Firefly RK3288 board or something else with a supported RockChip SoC
+   - Power connection to 5V using the supplied micro-USB power cable
+   - Separate USB serial cable attached to your computer and the Firefly
+        (connect to the micro-USB connector below the logo)
+   - rkflashtool [3]
+   - openssl (sudo apt-get install openssl)
+   - Serial UART connection [4]
+   - Suitable ARM cross compiler, e.g.:
+        sudo apt-get install gcc-4.7-arm-linux-gnueabi
+
+
+Building
+========
+
+At present nine RK3288 boards are supported:
+
+   - EVB RK3288 - use evb-rk3288 configuration
+   - Fennec RK3288 - use fennec-rk3288 configuration
+   - Firefly RK3288 - use firefly-rk3288 configuration
+   - Hisense Chromebook - use chromebook_jerry configuration
+   - MiQi RK3288 - use miqi-rk3288 configuration
+   - phyCORE-RK3288 RDK - use phycore-rk3288 configuration
+   - PopMetal RK3288 - use popmetal-rk3288 configuration
+   - Radxa Rock 2 - use rock2 configuration
+   - Tinker RK3288 - use tinker-rk3288 configuration
+
+Two RK3036 board are supported:
+
+   - EVB RK3036 - use evb-rk3036 configuration
+   - Kylin - use kylin_rk3036 configuration
+
+For example:
+
+   CROSS_COMPILE=arm-linux-gnueabi- make O=firefly firefly-rk3288_defconfig all
+
+(or you can use another cross compiler if you prefer)
+
+
+Writing to the board with USB
+=============================
+
+For USB to work you must get your board into ROM boot mode, either by erasing
+your MMC or (perhaps) holding the recovery button when you boot the board.
+To erase your MMC, you can boot into Linux and type (as root)
+
+   dd if=/dev/zero of=/dev/mmcblk0 bs=1M
+
+Connect your board's OTG port to your computer.
+
+To create a suitable image and write it to the board:
+
+   ./firefly-rk3288/tools/mkimage -n rk3288 -T rkimage -d \
+	./firefly-rk3288/spl/u-boot-spl-dtb.bin out && \
+   cat out | openssl rc4 -K 7c4e0304550509072d2c7b38170d1711 | rkflashtool l
+
+If all goes well you should something like:
+
+   U-Boot SPL 2015.07-rc1-00383-ge345740-dirty (Jun 03 2015 - 10:06:49)
+   Card did not respond to voltage select!
+   spl: mmc init failed with error: -17
+   ### ERROR ### Please RESET the board ###
+
+You will need to reset the board before each time you try. Yes, that's all
+it does so far. If support for the Rockchip USB protocol or DFU were added
+in SPL then we could in principle load U-Boot and boot to a prompt from USB
+as several other platforms do. However it does not seem to be possible to
+use the existing boot ROM code from SPL.
+
+
+Booting from an SD card
+=======================
+
+To write an image that boots from an SD card (assumed to be /dev/sdc):
+
+   ./firefly-rk3288/tools/mkimage -n rk3288 -T rksd -d \
+	firefly-rk3288/spl/u-boot-spl-dtb.bin out && \
+   sudo dd if=out of=/dev/sdc seek=64 && \
+   sudo dd if=firefly-rk3288/u-boot-dtb.img of=/dev/sdc seek=16384
+
+This puts the Rockchip header and SPL image first and then places the U-Boot
+image at block 16384 (i.e. 8MB from the start of the SD card). This
+corresponds with this setting in U-Boot:
+
+   #define CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR	0x4000
+
+Put this SD (or micro-SD) card into your board and reset it. You should see
+something like:
+
+   U-Boot 2016.01-rc2-00309-ge5bad3b-dirty (Jan 02 2016 - 23:41:59 -0700)
+
+   Model: Radxa Rock 2 Square
+   DRAM:  2 GiB
+   MMC:   dwmmc@ff0f0000: 0, dwmmc@ff0c0000: 1
+   *** Warning - bad CRC, using default environment
+
+   In:    serial
+   Out:   vop@ff940000.vidconsole
+   Err:   serial
+   Net:   Net Initialization Skipped
+   No ethernet found.
+   Hit any key to stop autoboot:  0
+   =>
+
+The rockchip bootrom can load and boot an initial spl, then continue to
+load a second-level bootloader(ie. U-BOOT) as soon as it returns to bootrom.
+Therefore RK3288 has another loading sequence like RK3036. The option of
+U-Boot is controlled with this setting in U-Boot:
+
+	#define CONFIG_SPL_ROCKCHIP_BACK_TO_BROM
+
+You can create the image via the following operations:
+
+   ./firefly-rk3288/tools/mkimage -n rk3288 -T rksd -d \
+	firefly-rk3288/spl/u-boot-spl-dtb.bin out && \
+   cat firefly-rk3288/u-boot-dtb.bin >> out && \
+   sudo dd if=out of=/dev/sdc seek=64
+
+If you have an HDMI cable attached you should see a video console.
+
+For evb_rk3036 board:
+	./evb-rk3036/tools/mkimage -n rk3036 -T rksd  -d evb-rk3036/spl/u-boot-spl.bin out && \
+	cat evb-rk3036/u-boot-dtb.bin >> out && \
+	sudo dd if=out of=/dev/sdc seek=64
+
+Note: rk3036 SDMMC and debug uart use the same iomux, so if you boot from SD, the
+      debug uart must be disabled
+
+
+Booting from an SD card on RK3288 with TPL
+==========================================
+
+Since the size of SPL can't be exceeded 0x8000 bytes in RK3288, it is not possible add
+new SPL features like Falcon mode or etc.
+
+So introduce TPL so-that adding new features to SPL is possible because now TPL should
+run minimal with code like DDR, clock etc and rest of new features in SPL.
+
+As of now TPL is added on Vyasa-RK3288 board.
+
+To write an image that boots from an SD card (assumed to be /dev/mmcblk0):
+
+   ./tools/mkimage -n rk3288 -T rksd -d ./tpl/u-boot-tpl.bin out &&
+    cat ./spl/u-boot-spl-dtb.bin >> out &&
+    sudo dd if=out of=/dev/mmcblk0 seek=64 &&
+    sudo dd if=u-boot-dtb.img of=/dev/mmcblk0 seek=16384
+
+Booting from an SD card on RK3188
+=================================
+
+For rk3188 boards the general storage onto the card stays the same as
+described above, but the image creation needs a bit more care.
+
+The bootrom of rk3188 expects to find a small 1kb loader which returns
+control to the bootrom, after which it will load the real loader, which
+can then be up to 29kb in size and does the regular ddr init.
+
+Additionally the rk3188 requires everything the bootrom loads to be
+rc4-encrypted. Except for the very first stage the bootrom always reads
+and decodes 2kb pages, so files should be sized accordingly.
+
+# copy tpl, pad to 1020 bytes and append spl
+cat tpl/u-boot-tpl.bin > tplspl.bin
+truncate -s 1020 tplspl.bin
+cat spl/u-boot-spl.bin >> tplspl.bin
+tools/mkimage -n rk3188 -T rksd -d tplspl.bin out
+
+# truncate, encode and append u-boot.bin
+truncate -s %2048 u-boot.bin
+cat u-boot.bin | split -b 512 --filter='openssl rc4 -K 7C4E0304550509072D2C7B38170D1711' >> out
+
+
+Using fastboot on rk3288
+========================
+- Write GPT partition layout to mmc device which fastboot want to use it to
+store the image
+
+        => gpt write mmc 1 $partitions
+
+- Invoke fastboot command to prepare
+
+        => fastboot 1
+
+- Start fastboot request on PC
+
+        fastboot -i 0x2207 flash loader evb-rk3288/spl/u-boot-spl-dtb.bin
+
+You should see something like:
+
+        => fastboot 1
+        WARNING: unknown variable: partition-type:loader
+        Starting download of 357796 bytes
+        ..
+        downloading of 357796 bytes finished
+        Flashing Raw Image
+        ........ wrote 357888 bytes to 'loader'
+
+Booting from SPI
+================
+
+To write an image that boots from SPI flash (e.g. for the Haier Chromebook):
+
+   ./chromebook_jerry/tools/mkimage -n rk3288 -T rkspi \
+	-d chromebook_jerry/spl/u-boot-spl-dtb.bin spl.bin && \
+   dd if=spl.bin of=spl-out.bin bs=128K conv=sync && \
+   cat spl-out.bin chromebook_jerry/u-boot-dtb.img >out.bin && \
+   dd if=out.bin of=out.bin.pad bs=4M conv=sync
+
+This converts the SPL image to the required SPI format by adding the Rockchip
+header and skipping every 2KB block. Then the U-Boot image is written at
+offset 128KB and the whole image is padded to 4MB which is the SPI flash size.
+The position of U-Boot is controlled with this setting in U-Boot:
+
+   #define CONFIG_SYS_SPI_U_BOOT_OFFS	(128 << 10)
+
+If you have a Dediprog em100pro connected then you can write the image with:
+
+      sudo em100 -s -c GD25LQ32 -d out.bin.pad -r
+
+When booting you should see something like:
+
+   U-Boot SPL 2015.07-rc2-00215-g9a58220-dirty (Jun 23 2015 - 12:11:32)
+
+
+   U-Boot 2015.07-rc2-00215-g9a58220-dirty (Jun 23 2015 - 12:11:32 -0600)
+
+   Model: Google Jerry
+   DRAM:  2 GiB
+   MMC:
+   Using default environment
+
+   In:    serial@ff690000
+   Out:   serial@ff690000
+   Err:   serial@ff690000
+   =>
+
+Future work
+===========
+
+Immediate priorities are:
+
+- USB host
+- USB device
+- Run CPU at full speed (code exists but we only see ~60 DMIPS maximum)
+- NAND flash
+- Support for other Rockchip parts
+- Boot U-Boot proper over USB OTG (at present only SPL works)
+
+
+Development Notes
+=================
+
+There are plenty of patches in the links below to help with this work.
+
+[1] https://github.com/rkchrome/uboot.git
+[2] https://github.com/linux-rockchip/u-boot-rockchip.git branch u-boot-rk3288
+[3] https://github.com/linux-rockchip/rkflashtool.git
+[4] http://wiki.t-firefly.com/index.php/Firefly-RK3288/Serial_debug/en
+
+rkimage
+-------
+
+rkimage.c produces an SPL image suitable for sending directly to the boot ROM
+over USB OTG. This is a very simple format - just the string RK32 (as 4 bytes)
+followed by u-boot-spl-dtb.bin.
+
+The boot ROM loads image to 0xff704000 which is in the internal SRAM. The SRAM
+starts at 0xff700000 and extends to 0xff718000 where we put the stack.
+
+rksd
+----
+
+rksd.c produces an image consisting of 32KB of empty space, a header and
+u-boot-spl-dtb.bin. The header is defined by 'struct header0_info' although
+most of the fields are unused by U-Boot. We just need to specify the
+signature, a flag and the block offset and size of the SPL image.
+
+The header occupies a single block but we pad it out to 4 blocks. The header
+is encoding using RC4 with the key 7c4e0304550509072d2c7b38170d1711. The SPL
+image can be encoded too but we don't do that.
+
+The maximum size of u-boot-spl-dtb.bin which the boot ROM will read is 32KB,
+or 0x40 blocks. This is a severe and annoying limitation. There may be a way
+around this limitation, since there is plenty of SRAM, but at present the
+board refuses to boot if this limit is exceeded.
+
+The image produced is padded up to a block boundary (512 bytes). It should be
+written to the start of an SD card using dd.
+
+Since this image is set to load U-Boot from the SD card at block offset,
+CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR, dd should be used to write
+u-boot-dtb.img to the SD card at that offset. See above for instructions.
+
+rkspi
+-----
+
+rkspi.c produces an image consisting of a header and u-boot-spl-dtb.bin. The
+resulting image is then spread out so that only the first 2KB of each 4KB
+sector is used. The header is the same as with rksd and the maximum size is
+also 32KB (before spreading). The image should be written to the start of
+SPI flash.
+
+See above for instructions on how to write a SPI image.
+
+rkmux.py
+--------
+
+You can use this script to create #defines for SoC register access. See the
+script for usage.
+
+
+Device tree and driver model
+----------------------------
+
+Where possible driver model is used to provide a structure to the
+functionality. Device tree is used for configuration. However these have an
+overhead and in SPL with a 32KB size limit some shortcuts have been taken.
+In general all Rockchip drivers should use these features, with SPL-specific
+modifications where required.
+
+GPT partition layout
+----------------------------
+
+Rockchip use a unified GPT partition layout  in open source support.
+With this GPT partition layout, uboot can be compatilbe with other components,
+like miniloader, trusted-os, arm-trust-firmware.
+
+There are some documents about partitions in the links below.
+http://rockchip.wikidot.com/partitions
+
+--
+Simon Glass <sjg@chromium.org>
+24 June 2015

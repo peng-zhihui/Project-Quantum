@@ -1,0 +1,109 @@
+Summary
+=======
+
+This README is about U-Boot support for Renesas's ARM Cortex-A9 based RMOBILE[1]
+and Cortex-A9/A53/A57 based R-Car[2] family of SoCs. Renesas's RMOBILE/R-Car SoC
+family contains an ARM Cortex-A9/A53/A57.
+
+Currently the following boards are supported:
+
+* KMC KZM-A9-GT [3]
+* Atmark-Techno Armadillo-800-EVA [4]
+* Renesas Electronics Lager
+* Renesas Electronics Koelsch
+* Renesas Electronics Salvator-X  M3
+* Renesas Electronics Salvator-XS H3 ES2.0+
+* Renesas Electronics ULCB M3 / H3 ES2.0+
+
+Toolchain
+=========
+
+Either ARMv7 toolchain for 32bit Cortex-A9 systems or ARMv8 (aarch64)
+toolchain for 64bit Cortex-A53/A57 systems. Currently we compile the
+32bit systems with -march=armv5 to allow more compilers to work. (For
+U-Boot code this has no performance impact.)
+
+Currently, ELDK[5], Linaro[6], CodeSourcery[7] and Emdebian[8] supports
+ARMv7. Modern distributions also contain ARMv7 and ARMv8 crosstoolchains
+in their package feeds.
+
+Build
+=====
+
+* KZM-A9-GT
+
+  make kzm9g_config
+  make
+
+* Armadillo-800-EVA
+
+  make armadillo-800eva_config
+  make
+
+  Note: Armadillo-800-EVA's U-Boot supports booting from SDcard only.
+        Please see "B.2 Appendix B Boot Specifications" in hardware manual.
+
+* Lager
+
+  make lager_config
+  make
+
+* Koelsch
+
+  make koelsch_config
+  make
+
+* Salvator-X M3
+
+  make r8a7796_salvator-x_defconfig
+  make
+
+* Salvator-XS H3 ES2.0
+
+  make r8a7795_salvator-x_defconfig
+  make
+
+* ULCB M3
+
+  make r8a7796_ulcb_defconfig
+  make
+
+* ULCB H3 ES2.0
+
+  make r8a7795_ulcb_defconfig
+  make
+
+Links
+=====
+
+[1] Renesas RMOBILE:
+
+http://am.renesas.com/products/soc/assp/mobile/r_mobile/index.jsp
+
+[2] Renesas R-Car:
+
+http://am.renesas.com/products/soc/assp/automotive/index.jsp
+
+[3] KZM-A9-GT
+
+http://www.kmckk.co.jp/kzma9-gt/index.html
+
+[4] Armadillo-800-EVA
+
+http://armadillo.atmark-techno.com/armadillo-800-EVA
+
+[5] ELDK
+
+http://www.denx.de/wiki/view/ELDK-5/WebHome#Section_1.6.
+
+[6] Linaro
+
+http://www.linaro.org/downloads/
+
+[7] CodeSourcey
+
+http://www.mentor.com/embedded-software/codesourcery
+
+[8] Emdebian
+
+http://www.emdebian.org/crosstools.html

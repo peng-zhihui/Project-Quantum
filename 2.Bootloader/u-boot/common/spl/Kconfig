@@ -1,0 +1,857 @@
+menu "SPL / TPL"
+
+config SUPPORT_SPL
+	bool
+
+config SUPPORT_TPL
+	bool
+
+config SPL_DFU_NO_RESET
+	bool
+
+config SPL
+	bool
+	depends on SUPPORT_SPL
+	prompt "Enable SPL"
+	help
+	  If you want to build SPL as well as the normal image, say Y.
+
+if SPL
+
+config SPL_LDSCRIPT
+	string "Linker script for the SPL stage"
+	default "arch/$(ARCH)/cpu/u-boot-spl.lds"
+	depends on SPL
+	help
+	  The SPL stage will usually require a different linker-script
+	  (as it runs from a different memory region) than the regular
+	  U-Boot stage.	 Set this to the path of the linker-script to
+	  be used for SPL.
+
+config SPL_BOARD_INIT
+	bool "Call board-specific initialization in SPL"
+	help
+	  If this option is enabled, U-Boot will call the function
+	  spl_board_init() from board_init_r(). This function should be
+	  provided by the board.
+
+config SPL_BOOTROM_SUPPORT
+        bool "Support returning to the BOOTROM"
+	help
+	  Some platforms (e.g. the Rockchip RK3368) provide support in their
+	  ROM for loading the next boot-stage after performing basic setup
+	  from the SPL stage.
+
+	  Enable this option, to return to the BOOTROM through the
+	  BOOT_DEVICE_BOOTROM (or fall-through to the next boot device in the
+	  boot device list, if not implemented for a given board)
+
+config SPL_RAW_IMAGE_SUPPORT
+	bool "Support SPL loading and booting of RAW images"
+	default n if (ARCH_MX6 && (SPL_MMC_SUPPORT || SPL_SATA_SUPPORT))
+	default y if !TI_SECURE_DEVICE
+	help
+	  SPL will support loading and booting a RAW image when this option
+	  is y. If this is not set, SPL will move on to other available
+	  boot media to find a suitable image.
+
+config SPL_LEGACY_IMAGE_SUPPORT
+	bool "Support SPL loading and booting of Legacy images"
+	default y if !TI_SECURE_DEVICE
+	help
+	  SPL will support loading and booting Legacy images when this option
+	  is y. If this is not set, SPL will move on to other available
+	  boot media to find a suitable image.
+
+config SPL_SYS_MALLOC_SIMPLE
+	bool
+	prompt "Only use malloc_simple functions in the SPL"
+	help
+	  Say Y here to only use the *_simple malloc functions from
+	  malloc_simple.c, rather then using the versions from dlmalloc.c;
+	  this will make the SPL binary smaller at the cost of more heap
+	  usage as the *_simple malloc functions do not re-use free-ed mem.
+
+config TPL_SYS_MALLOC_SIMPLE
+	bool
+	prompt "Only use malloc_simple functions in the TPL"
+	help
+	  Say Y here to only use the *_simple malloc functions from
+	  malloc_simple.c, rather then using the versions from dlmalloc.c;
+	  this will make the TPL binary smaller at the cost of more heap
+	  usage as the *_simple malloc functions do not re-use free-ed mem.
+
+config SPL_STACK_R
+	bool "Enable SDRAM location for SPL stack"
+	help
+	  SPL starts off execution in SRAM and thus typically has only a small
+	  stack available. Since SPL sets up DRAM while in its board_init_f()
+	  function, it is possible for the stack to move there before
+	  board_init_r() is reached. This option enables a special SDRAM
+	  location for the SPL stack. U-Boot SPL switches to this after
+	  board_init_f() completes, and before board_init_r() starts.
+
+config SPL_STACK_R_ADDR
+	depends on SPL_STACK_R
+	hex "SDRAM location for SPL stack"
+	default 0x82000000 if ARCH_OMAP2PLUS
+	help
+	  Specify the address in SDRAM for the SPL stack. This will be set up
+	  before board_init_r() is called.
+
+config SPL_STACK_R_MALLOC_SIMPLE_LEN
+	depends on SPL_STACK_R && SPL_SYS_MALLOC_SIMPLE
+	hex "Size of malloc_simple heap after switching to DRAM SPL stack"
+	default 0x100000
+	help
+	  Specify the amount of the stack to use as memory pool for
+	  malloc_simple after switching the stack to DRAM. This may be set
+	  to give board_init_r() a larger heap then the initial heap in
+	  SRAM which is limited to SYS_MALLOC_F_LEN bytes.
+
+config SPL_SEPARATE_BSS
+	bool "BSS section is in a different memory region from text"
+	help
+	  Some platforms need a large BSS region in SPL and can provide this
+	  because RAM is already set up. In this case BSS can be moved to RAM.
+	  This option should then be enabled so that the correct device tree
+	  location is used. Normally we put the device tree at the end of BSS
+	  but with this option enabled, it goes at _image_binary_end.
+
+config SPL_DISPLAY_PRINT
+	bool "Display a board-specific message in SPL"
+	help
+	  If this option is enabled, U-Boot will call the function
+	  spl_display_print() immediately after displaying the SPL console
+	  banner ("U-Boot SPL ..."). This function should be provided by
+	  the board.
+
+config SYS_MMCSD_RAW_MODE_U_BOOT_USE_SECTOR
+	bool "MMC raw mode: by sector"
+	default y if ARCH_SUNXI || ARCH_DAVINCI || ARCH_UNIPHIER ||ARCH_MX6 || \
+		     ARCH_ROCKCHIP || ARCH_MVEBU ||  ARCH_SOCFPGA || \
+		     ARCH_AT91 || ARCH_ZYNQ || ARCH_KEYSTONE || OMAP34XX || \
+		     OMAP44XX || OMAP54XX || AM33XX || AM43XX
+	help
+	  Use sector number for specifying U-Boot location on MMC/SD in
+	  raw mode.
+
+config SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR
+	hex "Address on the MMC to load U-Boot from"
+	depends on SYS_MMCSD_RAW_MODE_U_BOOT_USE_SECTOR
+	default 0x50 if ARCH_SUNXI
+	default 0x75 if ARCH_DAVINCI
+	default 0x8a if ARCH_MX6
+	default 0x100 if ARCH_UNIPHIER
+	default 0x140 if ARCH_MVEBU
+	default 0x200 if ARCH_SOCFPGA || ARCH_AT91
+	default 0x300 if ARCH_ZYNQ || ARCH_KEYSTONE || OMAP34XX || OMAP44XX || \
+		         OMAP54XX || AM33XX || AM43XX
+	default 0x4000 if ARCH_ROCKCHIP
+	help
+	  Address on the MMC to load U-Boot from, when the MMC is being used
+	  in raw mode. Units: MMC sectors (1 sector = 512 bytes).
+
+config SYS_MMCSD_RAW_MODE_U_BOOT_USE_PARTITION
+	bool "MMC Raw mode: by partition"
+	help
+	  Use a partition for loading U-Boot when using MMC/SD in raw mode.
+
+config SYS_MMCSD_RAW_MODE_U_BOOT_PARTITION
+	hex "Partition to use to load U-Boot from"
+	depends on SYS_MMCSD_RAW_MODE_U_BOOT_USE_PARTITION
+	default 1
+	help
+	  Partition on the MMC to load U-Boot from when the MMC is being
+	  used in raw mode
+
+config SYS_MMCSD_RAW_MODE_U_BOOT_USE_PARTITION_TYPE
+	bool "MMC raw mode: by partition type"
+	depends on DOS_PARTITION && SYS_MMCSD_RAW_MODE_U_BOOT_USE_PARTITION
+	help
+	  Use partition type for specifying U-Boot partition on MMC/SD in
+	  raw mode. U-Boot will be loaded from the first partition of this
+	  type to be found.
+
+config SYS_MMCSD_RAW_MODE_U_BOOT_PARTITION_TYPE
+	hex "Partition Type on the MMC to load U-Boot from"
+	depends on SYS_MMCSD_RAW_MODE_U_BOOT_USE_PARTITION_TYPE
+	help
+	  Partition Type on the MMC to load U-Boot from, when the MMC is being
+	  used in raw mode.
+
+config SPL_CRC32_SUPPORT
+	bool "Support CRC32"
+	depends on SPL_FIT
+	help
+	  Enable this to support CRC32 in FIT images within SPL. This is a
+	  32-bit checksum value that can be used to verify images. This is
+	  the least secure type of checksum, suitable for detected
+	  accidental image corruption. For secure applications you should
+	  consider SHA1 or SHA256.
+
+config SPL_MD5_SUPPORT
+	bool "Support MD5"
+	depends on SPL_FIT
+	help
+	  Enable this to support MD5 in FIT images within SPL. An MD5
+	  checksum is a 128-bit hash value used to check that the image
+	  contents have not been corrupted. Note that MD5 is not considered
+	  secure as it is possible (with a brute-force attack) to adjust the
+	  image while still retaining the same MD5 hash value. For secure
+	  applications where images may be changed maliciously, you should
+	  consider SHA1 or SHA256.
+
+config SPL_SHA1_SUPPORT
+	bool "Support SHA1"
+	depends on SPL_FIT
+	select SHA1
+	help
+	  Enable this to support SHA1 in FIT images within SPL. A SHA1
+	  checksum is a 160-bit (20-byte) hash value used to check that the
+	  image contents have not been corrupted or maliciously altered.
+	  While SHA1 is fairly secure it is coming to the end of its life
+	  due to the expanding computing power avaiable to brute-force
+	  attacks. For more security, consider SHA256.
+
+config SPL_SHA256_SUPPORT
+	bool "Support SHA256"
+	depends on SPL_FIT
+	select SHA256
+	help
+	  Enable this to support SHA256 in FIT images within SPL. A SHA256
+	  checksum is a 256-bit (32-byte) hash value used to check that the
+	  image contents have not been corrupted. SHA256 is recommended for
+	  use in secure applications since (as at 2016) there is no known
+	  feasible attack that could produce a 'collision' with differing
+	  input data. Use this for the highest security. Note that only the
+	  SHA256 variant is supported: SHA512 and others are not currently
+	  supported in U-Boot.
+
+config SPL_CPU_SUPPORT
+	bool "Support CPU drivers"
+	help
+	  Enable this to support CPU drivers in SPL. These drivers can set
+	  up CPUs and provide information about them such as the model and
+	  name. This can be useful in SPL since setting up the CPUs earlier
+	  may improve boot performance. Enable this option to build the
+	  drivers in drivers/cpu as part of an SPL build.
+
+config SPL_CRYPTO_SUPPORT
+	bool "Support crypto drivers"
+	help
+	  Enable crypto drivers in SPL. These drivers can be used to
+	  accelerate secure boot processing in secure applications. Enable
+	  this option to build the drivers in drivers/crypto as part of an
+	  SPL build.
+
+config SPL_HASH_SUPPORT
+	bool "Support hashing drivers"
+	select SHA1
+	select SHA256
+	help
+	  Enable hashing drivers in SPL. These drivers can be used to
+	  accelerate secure boot processing in secure applications. Enable
+	  this option to build system-specific drivers for hash acceleration
+	  as part of an SPL build.
+
+config SPL_DMA_SUPPORT
+	bool "Support DMA drivers"
+	help
+	  Enable DMA (direct-memory-access) drivers in SPL. These drivers
+	  can be used to handle memory-to-peripheral data transfer without
+	  the CPU moving the data. Enable this option to build the drivers
+	  in drivers/dma as part of an SPL build.
+
+config SPL_DRIVERS_MISC_SUPPORT
+	bool "Support misc drivers"
+	help
+	  Enable miscellaneous drivers in SPL. These drivers perform various
+	  tasks that don't fall nicely into other categories, Enable this
+	  option to build the drivers in drivers/misc as part of an SPL
+	  build, for those that support building in SPL (not all drivers do).
+
+config SPL_ENV_SUPPORT
+	bool "Support an environment"
+	help
+	  Enable environment support in SPL. The U-Boot environment provides
+	  a number of settings (essentially name/value pairs) which can
+	  control many aspects of U-Boot's operation. Normally this is not
+	  needed in SPL as it has a much simpler task with less
+	  configuration. But some boards use this to support 'Falcon' boot
+	  on EXT2 and FAT, where SPL boots directly into Linux without
+	  starting U-Boot first. Enabling this option will make env_get()
+	  and env_set() available in SPL.
+
+config SPL_SAVEENV
+	bool "Support save environment"
+	depends on SPL_ENV_SUPPORT
+	help
+	  Enable save environment support in SPL after setenv. By default
+	  the saveenv option is not provided in SPL, but some boards need
+	  this support in 'Falcon' boot, where SPL need to boot from
+	  different images based on environment variable set by OS. For
+	  example OS may set "reboot_image" environment variable to
+	  "recovery" inorder to boot recovery image by SPL. The SPL read
+	  "reboot_image" and act accordingly and change the reboot_image
+	  to default mode using setenv and save the environemnt.
+
+config SPL_ETH_SUPPORT
+	bool "Support Ethernet"
+	depends on SPL_ENV_SUPPORT
+	help
+	  Enable access to the network subsystem and associated Ethernet
+	  drivers in SPL. This permits SPL to load U-Boot over an Ethernet
+	  link rather than from an on-board peripheral. Environment support
+	  is required since the network stack uses a number of environment
+	  variables. See also SPL_NET_SUPPORT.
+
+config SPL_EXT_SUPPORT
+	bool "Support EXT filesystems"
+	help
+	  Enable support for EXT2/3/4 filesystems with SPL. This permits
+	  U-Boot (or Linux in Falcon mode) to be loaded from an EXT
+	  filesystem from within SPL. Support for the underlying block
+	  device (e.g. MMC or USB) must be enabled separately.
+
+config SPL_FAT_SUPPORT
+	bool "Support FAT filesystems"
+	select FS_FAT
+	help
+	  Enable support for FAT and VFAT filesystems with SPL. This
+	  permits U-Boot (or Linux in Falcon mode) to be loaded from a FAT
+	  filesystem from within SPL. Support for the underlying block
+	  device (e.g. MMC or USB) must be enabled separately.
+
+config SPL_FPGA_SUPPORT
+	bool "Support FPGAs"
+	help
+	  Enable support for FPGAs in SPL. Field-programmable Gate Arrays
+	  provide software-configurable hardware which is typically used to
+	  implement peripherals (such as UARTs, LCD displays, MMC) or
+	  accelerate custom processing functions, such as image processing
+	  or machine learning. Sometimes it is useful to program the FPGA
+	  as early as possible during boot, and this option can enable that
+	  within SPL.
+
+config SPL_GPIO_SUPPORT
+	bool "Support GPIO"
+	help
+	  Enable support for GPIOs (General-purpose Input/Output) in SPL.
+	  GPIOs allow U-Boot to read the state of an input line (high or
+	  low) and set the state of an output line. This can be used to
+	  drive LEDs, control power to various system parts and read user
+	  input. GPIOs can be useful in SPL to enable a 'sign-of-life' LED,
+	  for example. Enable this option to build the drivers in
+	  drivers/gpio as part of an SPL build.
+
+config SPL_I2C_SUPPORT
+	bool "Support I2C"
+	help
+	  Enable support for the I2C (Inter-Integrated Circuit) bus in SPL.
+	  I2C works with a clock and data line which can be driven by a
+	  one or more masters or slaves. It is a fairly complex bus but is
+	  widely used as it only needs two lines for communication. Speeds of
+	  400kbps are typical but up to 3.4Mbps is supported by some
+	  hardware. I2C can be useful in SPL to configure power management
+	  ICs (PMICs) before raising the CPU clock speed, for example.
+	  Enable this option to build the drivers in drivers/i2c as part of
+	  an SPL build.
+
+config SPL_LIBCOMMON_SUPPORT
+	bool "Support common libraries"
+	help
+	  Enable support for common U-Boot libraries within SPL. These
+	  libraries include common code to deal with U-Boot images,
+	  environment and USB, for example. This option is enabled on many
+	  boards. Enable this option to build the code in common/ as part of
+	  an SPL build.
+
+config SPL_LIBDISK_SUPPORT
+	bool "Support disk paritions"
+	help
+	  Enable support for disk partitions within SPL. 'Disk' is something
+	  of a misnomer as it includes non-spinning media such as flash (as
+	  used in MMC and USB sticks). Partitions provide a way for a disk
+	  to be split up into separate regions, with a partition table placed
+	  at the start or end which describes the location and size of each
+	  'partition'. These partitions are typically uses as individual block
+	  devices, typically with an EXT2 or FAT filesystem in each. This
+	  option enables whatever partition support has been enabled in
+	  U-Boot to also be used in SPL. It brings in the code in disk/.
+
+config SPL_LIBGENERIC_SUPPORT
+	bool "Support generic libraries"
+	help
+	  Enable support for generic U-Boot libraries within SPL. These
+	  libraries include generic code to deal with device tree, hashing,
+	  printf(), compression and the like. This option is enabled on many
+	  boards. Enable this option to build the code in lib/ as part of an
+	  SPL build.
+
+config SPL_MMC_SUPPORT
+	bool "Support MMC"
+	depends on MMC
+	help
+	  Enable support for MMC (Multimedia Card) within SPL. This enables
+	  the MMC protocol implementation and allows any enabled drivers to
+	  be used within SPL. MMC can be used with or without disk partition
+	  support depending on the application (SPL_LIBDISK_SUPPORT). Enable
+	  this option to build the drivers in drivers/mmc as part of an SPL
+	  build.
+
+config SPL_MPC8XXX_INIT_DDR_SUPPORT
+	bool "Support MPC8XXX DDR init"
+	help
+	  Enable support for DDR-SDRAM (double-data-rate synchronous dynamic
+	  random-access memory) on the MPC8XXX family within SPL. This
+	  allows DRAM to be set up before loading U-Boot into that DRAM,
+	  where it can run.
+
+config SPL_MTD_SUPPORT
+	bool "Support MTD drivers"
+	help
+	  Enable support for MTD (Memory Technology Device) within SPL. MTD
+	  provides a block interface over raw NAND and can also be used with
+	  SPI flash. This allows SPL to load U-Boot from supported MTD
+	  devices. See SPL_NAND_SUPPORT and SPL_ONENAND_SUPPORT for how
+	  to enable specific MTD drivers.
+
+config SPL_MUSB_NEW_SUPPORT
+	bool "Support new Mentor Graphics USB"
+	help
+	  Enable support for Mentor Graphics USB in SPL. This is a new
+	  driver used by some boards. Enable this option to build
+	  the drivers in drivers/usb/musb-new as part of an SPL build. The
+	  old drivers are in drivers/usb/musb.
+
+config SPL_NAND_SUPPORT
+	bool "Support NAND flash"
+	help
+	  Enable support for NAND (Negative AND) flash in SPL. NAND flash
+	  can be used to allow SPL to load U-Boot from supported devices.
+	  This enables the drivers in drivers/mtd/nand as part of an SPL
+	  build.
+
+config SPL_NET_SUPPORT
+	bool "Support networking"
+	help
+	  Enable support for network devices (such as Ethernet) in SPL.
+	  This permits SPL to load U-Boot over a network link rather than
+	  from an on-board peripheral. Environment support is required since
+	  the network stack uses a number of environment variables. See also
+	  SPL_ETH_SUPPORT.
+
+if SPL_NET_SUPPORT
+config SPL_NET_VCI_STRING
+	string "BOOTP Vendor Class Identifier string sent by SPL"
+	help
+	  As defined by RFC 2132 the vendor class identifier field can be
+	  sent by the client to identify the vendor type and configuration
+	  of a client.  This is often used in practice to allow for the DHCP
+	  server to specify different files to load depending on if the ROM,
+	  SPL or U-Boot itself makes the request
+endif   # if SPL_NET_SUPPORT
+
+config SPL_NO_CPU_SUPPORT
+	bool "Drop CPU code in SPL"
+	help
+	  This is specific to the ARM926EJ-S CPU. It disables the standard
+	  start.S start-up code, presumably so that a replacement can be
+	  used on that CPU. You should not enable it unless you know what
+	  you are doing.
+
+config SPL_NOR_SUPPORT
+	bool "Support NOR flash"
+	help
+	  Enable support for loading U-Boot from memory-mapped NOR (Negative
+	  OR) flash in SPL. NOR flash is slow to write but fast to read, and
+	  a memory-mapped device makes it very easy to access. Loading from
+	  NOR is typically achieved with just a memcpy().
+
+config SPL_XIP_SUPPORT
+	bool "Support XIP"
+	depends on SPL
+	help
+	  Enable support for execute in place of U-Boot or kernel image. There
+	  is no need to copy image from flash to ram if flash supports execute
+	  in place. Its very useful in systems having enough flash but not
+	  enough ram to load the image.
+
+config SPL_ONENAND_SUPPORT
+	bool "Support OneNAND flash"
+	help
+	  Enable support for OneNAND (Negative AND) flash in SPL. OneNAND is
+	  a type of NAND flash and therefore can be used to allow SPL to
+	  load U-Boot from supported devices. This enables the drivers in
+	  drivers/mtd/onenand as part of an SPL build.
+
+config SPL_OS_BOOT
+	bool "Activate Falcon Mode"
+	depends on !TI_SECURE_DEVICE
+	default n
+	help
+	  Enable booting directly to an OS from SPL.
+	  for more info read doc/README.falcon
+
+if SPL_OS_BOOT
+config SYS_OS_BASE
+	hex "addr, where OS is found"
+	depends on SPL_NOR_SUPPORT
+	help
+	  Specify the address, where the OS image is found, which
+	  gets booted.
+
+endif # SPL_OS_BOOT
+
+config SPL_PCI_SUPPORT
+	bool "Support PCI drivers"
+	help
+	  Enable support for PCI in SPL. For platforms that need PCI to boot,
+	  or must perform some init using PCI in SPL, this provides the
+	  necessary driver support. This enables the drivers in drivers/pci
+	  as part of an SPL build.
+
+config SPL_PCH_SUPPORT
+	bool "Support PCH drivers"
+	help
+	  Enable support for PCH (Platform Controller Hub) devices in SPL.
+	  These are used to set up GPIOs and the SPI peripheral early in
+	  boot. This enables the drivers in drivers/pch as part of an SPL
+	  build.
+
+config SPL_POST_MEM_SUPPORT
+	bool "Support POST drivers"
+	help
+	  Enable support for POST (Power-on Self Test) in SPL. POST is a
+	  procedure that checks that the hardware (CPU or board) appears to
+	  be functionally correctly. It is a sanity check that can be
+	  performed before booting. This enables the drivers in post/drivers
+	  as part of an SPL build.
+
+config SPL_POWER_SUPPORT
+	bool "Support power drivers"
+	help
+	  Enable support for power control in SPL. This includes support
+	  for PMICs (Power-management Integrated Circuits) and some of the
+	  features provided by PMICs. In particular, voltage regulators can
+	  be used to enable/disable power and vary its voltage. That can be
+	  useful in SPL to turn on boot peripherals and adjust CPU voltage
+	  so that the clock speed can be increased. This enables the drivers
+	  in drivers/power, drivers/power/pmic and drivers/power/regulator
+	  as part of an SPL build.
+
+config SPL_RAM_SUPPORT
+	bool "Support booting from RAM"
+	default y if MICROBLAZE || ARCH_SOCFPGA || TEGRA || ARCH_ZYNQ
+	help
+	  Enable booting of an image in RAM. The image can be preloaded or
+	  it can be loaded by SPL directly into RAM (e.g. using USB).
+
+config SPL_RAM_DEVICE
+	bool "Support booting from preloaded image in RAM"
+	depends on SPL_RAM_SUPPORT
+	default y if MICROBLAZE || ARCH_SOCFPGA || TEGRA || ARCH_ZYNQ
+	help
+	  Enable booting of an image already loaded in RAM. The image has to
+	  be already in memory when SPL takes over, e.g. loaded by the boot
+	  ROM.
+
+config SPL_RTC_SUPPORT
+	bool "Support RTC drivers"
+	help
+	  Enable RTC (Real-time Clock) support in SPL. This includes support
+	  for reading and setting the time. Some RTC devices also have some
+	  non-volatile (battery-backed) memory which is accessible if
+	  needed. This enables the drivers in drivers/rtc as part of an SPL
+	  build.
+
+config SPL_SATA_SUPPORT
+	bool "Support loading from SATA"
+	help
+	  Enable support for SATA (Serial AT attachment) in SPL. This allows
+	  use of SATA devices such as hard drives and flash drivers for
+	  loading U-Boot. SATA is used in higher-end embedded systems and
+	  can provide higher performance than MMC , at somewhat higher
+	  expense and power consumption. This enables loading from SATA
+	  using a configured device.
+
+config SPL_SERIAL_SUPPORT
+	bool "Support serial"
+	help
+	  Enable support for serial in SPL. This allows use of a serial UART
+	  for displaying messages while SPL is running. It also brings in
+	  printf() and panic() functions. This should normally be enabled
+	  unless there are space reasons not to. Even then, consider
+	  enabling USE_TINY_PRINTF which is a small printf() version.
+
+config SPL_SPI_FLASH_SUPPORT
+	bool "Support SPI flash drivers"
+	help
+	  Enable support for using SPI flash in SPL, and loading U-Boot from
+	  SPI flash. SPI flash (Serial Peripheral Bus flash) is named after
+	  the SPI bus that is used to connect it to a system. It is a simple
+	  but fast bidirectional 4-wire bus (clock, chip select and two data
+	  lines). This enables the drivers in drivers/mtd/spi as part of an
+	  SPL build. This normally requires SPL_SPI_SUPPORT.
+
+config SPL_SPI_SUPPORT
+	bool "Support SPI drivers"
+	help
+	  Enable support for using SPI in SPL. This is used for connecting
+	  to SPI flash for loading U-Boot. See SPL_SPI_FLASH_SUPPORT for
+	  more details on that. The SPI driver provides the transport for
+	  data between the SPI flash and the CPU. This option can be used to
+	  enable SPI drivers that are needed for other purposes also, such
+	  as a SPI PMIC.
+
+config SPL_THERMAL
+	bool "Driver support for thermal devices"
+	help
+	  Enable support for temperature-sensing devices. Some SoCs have on-chip
+	  temperature sensors to permit warnings, speed throttling or even
+	  automatic power-off when the temperature gets too high or low. Other
+	  devices may be discrete but connected on a suitable bus.
+
+config SPL_USB_HOST_SUPPORT
+	bool "Support USB host drivers"
+	help
+	  Enable access to USB (Universal Serial Bus) host devices so that
+	  SPL can load U-Boot from a connected USB peripheral, such as a USB
+	  flash stick. While USB takes a little longer to start up than most
+	  buses, it is very flexible since many different types of storage
+	  device can be attached. This option enables the drivers in
+	  drivers/usb/host as part of an SPL build.
+
+config SPL_USB_SUPPORT
+	bool "Support loading from USB"
+	depends on SPL_USB_HOST_SUPPORT
+	help
+	  Enable support for USB devices in SPL. This allows use of USB
+	  devices such as hard drives and flash drivers for loading U-Boot.
+	  The actual drivers are enabled separately using the normal U-Boot
+	  config options. This enables loading from USB using a configured
+	  device.
+
+config SPL_USB_GADGET_SUPPORT
+	bool "Suppport USB Gadget drivers"
+	help
+	  Enable USB Gadget API which allows to enable USB device functions
+	  in SPL.
+
+if SPL_USB_GADGET_SUPPORT
+
+config SPL_USBETH_SUPPORT
+	bool "Support USB Ethernet drivers"
+	help
+	  Enable access to the USB network subsystem and associated
+	  drivers in SPL. This permits SPL to load U-Boot over a
+	  USB-connected Ethernet link (such as a USB Ethernet dongle) rather
+	  than from an onboard peripheral. Environment support is required
+	  since the network stack uses a number of environment variables.
+	  See also SPL_NET_SUPPORT and SPL_ETH_SUPPORT.
+
+config SPL_DFU_SUPPORT
+	bool "Support DFU (Device Firmware Upgarde)"
+	select SPL_HASH_SUPPORT
+	select SPL_DFU_NO_RESET
+	depends on SPL_RAM_SUPPORT
+	help
+	  This feature enables the DFU (Device Firmware Upgarde) in SPL with
+	  RAM memory device support. The ROM code will load and execute
+	  the SPL built with dfu. The user can load binaries (u-boot/kernel) to
+	  selected device partition from host-pc using dfu-utils.
+	  This feature is useful to flash the binaries to factory or bare-metal
+	  boards using USB interface.
+
+choice
+	bool "DFU device selection"
+	depends on SPL_DFU_SUPPORT
+
+config SPL_DFU_RAM
+	bool "RAM device"
+	depends on SPL_DFU_SUPPORT && SPL_RAM_SUPPORT
+	help
+	 select RAM/DDR memory device for loading binary images
+	 (u-boot/kernel) to the selected device partition using
+	 DFU and execute the u-boot/kernel from RAM.
+
+endchoice
+
+config SPL_USB_SDP_SUPPORT
+	bool "Support SDP (Serial Download Protocol)"
+	help
+	  Enable Serial Download Protocol (SDP) device support in SPL. This
+	  allows to download images into memory and execute (jump to) them
+	  using the same protocol as implemented by the i.MX family's boot ROM.
+endif
+
+config SPL_WATCHDOG_SUPPORT
+	bool "Support watchdog drivers"
+	help
+	  Enable support for watchdog drivers in SPL. A watchdog is
+	  typically a hardware peripheral which can reset the system when it
+	  detects no activity for a while (such as a software crash). This
+	  enables the drivers in drivers/watchdog as part of an SPL build.
+
+config SPL_YMODEM_SUPPORT
+	bool "Support loading using Ymodem"
+	help
+	  While loading from serial is slow it can be a useful backup when
+	  there is no other option. The Ymodem protocol provides a reliable
+	  means of transmitting U-Boot over a serial line for using in SPL,
+	  with a checksum to ensure correctness.
+
+config SPL_ATF_SUPPORT
+	bool "Support ARM Trusted Firmware"
+	depends on ARM64
+	help
+	  ATF(ARM Trusted Firmware) is a component for ARM arch64 which
+	  is loaded by SPL(which is considered as BL2 in ATF terminology).
+	  More detail at: https://github.com/ARM-software/arm-trusted-firmware
+
+config SPL_ATF_TEXT_BASE
+	depends on SPL_ATF_SUPPORT
+	hex "ATF BL31 base address"
+	help
+	  This is the base address in memory for ATF BL31 text and entry point.
+
+config TPL
+	bool
+	depends on SUPPORT_TPL
+	prompt "Enable TPL"
+	help
+	  If you want to build TPL as well as the normal image and SPL, say Y.
+
+if TPL
+
+config TPL_LDSCRIPT
+        string "Linker script for the TPL stage"
+	depends on TPL
+	help
+	  The TPL stage will usually require a different linker-script
+	  (as it runs from a different memory region) than the regular
+	  U-Boot stage.  Set this to the path of the linker-script to
+	  be used for TPL.
+
+	  May be left empty to trigger the Makefile infrastructure to
+	  fall back to the linker-script used for the SPL stage.
+
+config TPL_NEEDS_SEPARATE_TEXT_BASE
+        bool "TPL needs a separate text-base"
+	default n
+	depends on TPL
+	help
+	  Enable, if the TPL stage should not inherit its text-base
+	  from the SPL stage.  When enabled, a base address for the
+	  .text sections of the TPL stage has to be set below.
+
+config TPL_NEEDS_SEPARATE_STACK
+        bool "TPL needs a separate initial stack-pointer"
+	default n
+	depends on TPL
+	help
+	  Enable, if the TPL stage should not inherit its initial
+	  stack-pointer from the settings for the SPL stage.
+
+config TPL_TEXT_BASE
+        hex "Base address for the .text section of the TPL stage"
+	depends on TPL_NEEDS_SEPARATE_TEXT_BASE
+	help
+	  The base address for the .text section of the TPL stage.
+
+config TPL_MAX_SIZE
+        int "Maximum size (in bytes) for the TPL stage"
+	default 0
+	depends on TPL
+	help
+	  The maximum size (in bytes) of the TPL stage.
+
+config TPL_STACK
+        hex "Address of the initial stack-pointer for the TPL stage"
+	depends on TPL_NEEDS_SEPARATE_STACK
+	help
+	  The address of the initial stack-pointer for the TPL stage.
+	  Usually this will be the (aligned) top-of-stack.
+
+config TPL_BOOTROM_SUPPORT
+        bool "Support returning to the BOOTROM (from TPL)"
+	help
+	  Some platforms (e.g. the Rockchip RK3368) provide support in their
+	  ROM for loading the next boot-stage after performing basic setup
+	  from the TPL stage.
+
+	  Enable this option, to return to the BOOTROM through the
+	  BOOT_DEVICE_BOOTROM (or fall-through to the next boot device in the
+	  boot device list, if not implemented for a given board)
+
+config TPL_DRIVERS_MISC_SUPPORT
+	bool "Support misc drivers in TPL"
+	help
+	  Enable miscellaneous drivers in TPL. These drivers perform various
+	  tasks that don't fall nicely into other categories, Enable this
+	  option to build the drivers in drivers/misc as part of an TPL
+	  build, for those that support building in TPL (not all drivers do).
+
+config TPL_ENV_SUPPORT
+	bool "Support an environment"
+	help
+	  Enable environment support in TPL. See SPL_ENV_SUPPORT for details.
+
+config TPL_I2C_SUPPORT
+	bool "Support I2C"
+	help
+	  Enable support for the I2C bus in TPL. See SPL_I2C_SUPPORT for
+	  details.
+
+config TPL_LIBCOMMON_SUPPORT
+	bool "Support common libraries"
+	help
+	  Enable support for common U-Boot libraries within TPL. See
+	  SPL_LIBCOMMON_SUPPORT for details.
+
+config TPL_LIBGENERIC_SUPPORT
+	bool "Support generic libraries"
+	help
+	  Enable support for generic U-Boot libraries within TPL. See
+	  SPL_LIBGENERIC_SUPPORT for details.
+
+config TPL_MPC8XXX_INIT_DDR_SUPPORT
+	bool "Support MPC8XXX DDR init"
+	help
+	  Enable support for DDR-SDRAM on the MPC8XXX family within TPL. See
+	  SPL_MPC8XXX_INIT_DDR_SUPPORT for details.
+
+config TPL_MMC_SUPPORT
+	bool "Support MMC"
+	depends on MMC
+	help
+	  Enable support for MMC within TPL. See SPL_MMC_SUPPORT for details.
+
+config TPL_NAND_SUPPORT
+	bool "Support NAND flash"
+	help
+	  Enable support for NAND in TPL. See SPL_NAND_SUPPORT for details.
+
+config TPL_SERIAL_SUPPORT
+	bool "Support serial"
+	help
+	  Enable support for serial in TPL. See SPL_SERIAL_SUPPORT for
+	  details.
+
+config TPL_SPI_FLASH_SUPPORT
+	bool "Support SPI flash drivers"
+	help
+	  Enable support for using SPI flash in TPL. See SPL_SPI_FLASH_SUPPORT
+	  for details.
+
+config TPL_SPI_SUPPORT
+	bool "Support SPI drivers"
+	help
+	  Enable support for using SPI in TPL. See SPL_SPI_SUPPORT for
+	  details.
+
+endif # TPL
+
+endif # SPL
+endmenu

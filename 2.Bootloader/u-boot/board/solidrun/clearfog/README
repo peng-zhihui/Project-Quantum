@@ -1,0 +1,38 @@
+Update from original Marvell U-Boot to mainline U-Boot:
+-------------------------------------------------------
+
+Generate the U-Boot image with these commands:
+
+$ make clearfog_defconfig
+$ make
+
+The resulting image including the SPL binary with the
+full DDR setup is "u-boot-spl.kwb".
+
+Now all you need to do is copy this image on a SD card.
+For example with this command:
+
+$ sudo dd if=u-boot-spl.kwb of=/dev/sdX bs=512 seek=1
+
+Please use the correct device node for your setup instead
+of "/dev/sdX" here!
+
+Boot from UART:
+---------------
+
+Connect the on-board micro-USB (CF Pro: CON11, CF Base: CON5)
+to your host.
+
+Set the SW1 DIP switches to UART boot (0: OFF, 1: ON):
+
+  ClearFog Base: 01001
+  ClearFog Pro:  11110
+
+Run the following command to initiate U-Boot download:
+
+  ./tools/kwboot -b u-boot-spl.kwb /dev/ttyUSBX
+
+Use the correct UART device node for /dev/ttyUSBX.
+
+When download finishes start your favorite terminal emulator
+on /dev/ttyUSBX.

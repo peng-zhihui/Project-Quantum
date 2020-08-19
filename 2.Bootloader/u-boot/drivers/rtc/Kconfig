@@ -1,0 +1,33 @@
+#
+# RTC drivers configuration
+#
+
+menu "Real Time Clock"
+
+config DM_RTC
+	bool "Enable Driver Model for RTC drivers"
+	depends on DM
+	help
+	  Enable drver model for real-time-clock drivers. The RTC uclass
+	  then provides the rtc_get()/rtc_set() interface, delegating to
+	  drivers to perform the actual functions. See rtc.h for a
+	  description of the API.
+
+config RTC_PCF2127
+	bool "Enable PCF2127 driver"
+	depends on DM_RTC
+	help
+	  The PCF2127 is a CMOS Real Time Clock (RTC) and calendar with an integrated
+	  Temperature Compensated Crystal (Xtal) Oscillator (TCXO) and a 32.768 kHz quartz
+	  crystal optimized for very high accuracy and very low power consumption. The PCF2127
+	  has a selectable I2C-bus or SPI-bus, a backup battery switch-over circuit, a
+	  programmable watchdog function, a timestamp function, and many other features.
+
+config RTC_DS1307
+	bool "Enable DS1307 driver"
+	depends on DM_RTC
+	help
+	  Support for Dallas Semiconductor (now Maxim) DS1307 and DS1338/9 and
+	  compatible Real Time Clock devices.
+
+endmenu

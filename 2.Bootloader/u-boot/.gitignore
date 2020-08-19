@@ -1,0 +1,87 @@
+#
+# NOTE! Don't add files that are generated in specific
+# subdirectories here. Add them in the ".gitignore" file
+# in that subdirectory instead.
+#
+# Normal rules
+#
+.*
+*.o
+*.o.*
+*.a
+*.s
+*.su
+*.mod.c
+*.i
+*.lst
+*.order
+*.elf
+*.swp
+*.bin
+*.patch
+*.cfgtmp
+
+# host programs on Cygwin
+*.exe
+
+# Build tree
+/build-*
+
+#
+# Top-level generic files
+#
+fit-dtb.blob
+/MLO*
+/SPL*
+/System.map
+/u-boot*
+/boards.cfg
+
+#
+# git files that we don't want to ignore even it they are dot-files
+#
+!.gitignore
+!.mailmap
+
+#
+# Generated files
+#
+/LOG
+/spl/
+/tpl/
+/defconfig
+
+#
+# Generated include files
+#
+/include/config/
+/include/generated/
+
+# stgit generated dirs
+patches-*
+.stgit-edit.txt
+
+# quilt's files
+patches
+series
+
+# gdb files
+.gdb_history
+
+# cscope files
+cscope.*
+
+# tags files
+/tags
+/ctags
+/etags
+
+# gnu global files
+GPATH
+GRTAGS
+GSYMS
+GTAGS
+
+*.orig
+*~
+\#*#

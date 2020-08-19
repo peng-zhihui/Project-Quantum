@@ -1,0 +1,6 @@
+MCX BOARD
+M:	Anatolij Gustschin <agust@denx.de>
+S:	Maintained
+F:	board/htkw/mcx/
+F:	include/configs/mcx.h
+F:	configs/mcx_defconfig

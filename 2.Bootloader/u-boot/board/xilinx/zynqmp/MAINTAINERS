@@ -1,0 +1,6 @@
+XILINX_ZYNQMP BOARDS
+M:	Michal Simek <michal.simek@xilinx.com>
+S:	Maintained
+F:	board/xilinx/zynqmp/
+F:	include/configs/xilinx_zynqmp*
+F:	configs/xilinx_zynqmp*

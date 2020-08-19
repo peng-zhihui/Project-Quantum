@@ -1,0 +1,6 @@
+ZYNQ BOARD
+M:	Michal Simek <monstr@monstr.eu>
+S:	Maintained
+F:	board/xilinx/zynq/
+F:	include/configs/zynq*.h
+F:	configs/zynq_*_defconfig
