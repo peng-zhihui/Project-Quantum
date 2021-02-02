@@ -1,0 +1,25 @@
+#
+# Allwinner DE2 Video configuration
+#
+
+config DRM_SUN8I
+	bool
+
+config DRM_SUN8I_DE2
+	tristate "Support for Allwinner Video with DE2 interface"
+	depends on DRM && OF
+	select DRM_GEM_CMA_HELPER
+	select DRM_KMS_CMA_HELPER
+	select DRM_KMS_HELPER
+	select DRM_SUN8I
+	help
+	  Choose this option if your Allwinner chipset has the DE2 interface
+	  as the A64, A83T and H3. If M is selected the module will be called
+	  sun8i-de2-drm.
+
+config DRM_SUN8I_DE2_HDMI
+	tristate "Support for DE2 HDMI"
+	depends on DRM_SUN8I_DE2
+	help
+	  Choose this option if you use want HDMI on DE2.
+	  If M is selected the module will be called sun8i-de2-hdmi.

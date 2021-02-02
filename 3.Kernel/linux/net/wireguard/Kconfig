@@ -1,0 +1,30 @@
+config WIREGUARD
+	tristate "IP: WireGuard secure network tunnel"
+	depends on NET && INET
+	select NET_UDP_TUNNEL
+	select CRYPTO_BLKCIPHER
+	select VFP
+	select VFPv3
+	select NEON
+	select KERNEL_MODE_NEON
+	default m
+	---help---
+	  WireGuard is a secure, fast, and easy to use replacement for IPSec
+	  that uses modern cryptography and clever networking tricks. It's
+	  designed to be fairly general purpose and abstract enough to fit most
+	  use cases, while at the same time remaining extremely simple to
+	  configure. See www.wireguard.com for more info.
+
+	  It's safe to say Y or M here, as the driver is very lightweight and
+	  is only in use when an administrator chooses to add an interface.
+
+config WIREGUARD_DEBUG
+	bool "Debugging checks and verbose messages"
+	depends on WIREGUARD
+	---help---
+	  This will write log messages for handshake and other events
+	  that occur for a WireGuard interface. It will also perform some
+	  extra validation checks and unit tests at various points. This is
+	  only useful for debugging.
+
+	  Say N here unless you know what you're doing.

@@ -1,0 +1,87 @@
+/*
+ * Device Tree overlay for Matrix - 2'8 SPI Key TFT
+ */
+
+/dts-v1/;
+/plugin/;
+#include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/interrupt-controller/irq.h>
+/ {
+	compatible = "allwinner,sun8i-h3";
+
+	fragment@0 {
+		target = <&spi0>;
+		__overlay__ {
+			status = "okay";
+		};
+	};
+
+	fragment@1 {
+		target = <&spidev0>;
+		__overlay__ {
+			status = "disabled";
+		};
+	};
+
+	fragment@2 {
+		target = <&pio>;
+		__overlay__ {
+			spi0_cs_pins: spi0_cs_pins {
+				pins = "PC3", "PA6";
+				function = "gpio_out";
+			};
+		};
+	};
+
+	fragment@3 {
+		target = <&spi0>;
+		__overlay__ {
+			/* needed to avoid dtc warning */
+			#address-cells = <1>;
+			#size-cells = <0>;
+			pinctrl-0 = <&spi0_pins &spi0_cs_pins>;
+			cs-gpios = <&pio 2 3 GPIO_ACTIVE_HIGH>, <&pio 0 6 GPIO_ACTIVE_HIGH>;
+
+			pitft: pitft@0{
+				compatible = "sitronix,st7789v";
+				reg = <0>;
+				status = "okay";
+
+				spi-max-frequency = <50000000>;
+				rotate = <90>;
+				fps = <33>;
+				buswidth = <8>;
+				dc-gpios = <&pio 0 1 GPIO_ACTIVE_HIGH>;	 /* PA1 */
+				reset-gpios = <&pio 6 11 GPIO_ACTIVE_HIGH>; /* PG11 */
+				led-gpios = <&pio 0 0 GPIO_ACTIVE_LOW>;	 /* PA0 */
+				debug = <0x0>;
+			};
+
+			pitft_ts: pitft-ts@1 {
+				compatible = "ti,ads7846";
+				reg = <1>;
+				status = "okay";
+
+				spi-max-frequency = <2000000>;
+				interrupt-parent = <&pio>;
+				interrupts = <6 9 IRQ_TYPE_EDGE_FALLING>;   /* PG9 / EINT9 */
+				pendown-gpio = <&pio 6 9 GPIO_ACTIVE_LOW>;
+				ti,swap-xy;
+				ti,vref-delay-usecs = <1000>;
+				ti,x-min = /bits/ 16 <100>;
+				ti,x-max = /bits/ 16 <0xfff>;
+				ti,y-min = /bits/ 16 <100>;
+				ti,y-max = /bits/ 16 <0xfff>;
+				ti,vref-mv = <3300>;
+				ti,x-plate-ohms = /bits/ 16 <256>;
+				ti,penirq-recheck-delay-usecs = <10>;
+				ti,settle-delay-usec = /bits/ 16 <100>;
+				ti,keep-vref-on = <1>;
+				ti,pressure-max = /bits/ 16 <0xfff>;
+				ti,debounce-max = <10>;
+				ti,debounce-tol = <30>;
+				ti,debounce-rep = <1>;
+			};
+		};
+	};
+};

@@ -717,6 +717,8 @@ char nanopi_board[][BOARD_NAME_LENGTH] = {
     "nanopi-hero",
     "nanopi-duo2",
     "nanopi-r1",
+    "unit",
+    "quark-n",
 };
 #if 0
 int nanopi_dram_clk[] = {
@@ -824,6 +826,8 @@ int nanopi_get_board(void)
 	if (ret == 0 && sid[0] != 0) {
 		cputype = sid[0] & 0xff;
 	}
+
+#if 0
 	switch (cputype) {
 	case CPU_TYPE_H2_1:
 	case CPU_TYPE_H2_2:
@@ -926,9 +930,11 @@ int nanopi_get_board(void)
 
 		break;
 	}	
+#endif
 
 	//Custom boardtype
-	boardtype = BOARD_TYPE_NANOPI_NEO_CORE;
+	env_set("cpu", "h3");
+	boardtype = BOARD_TYPE_QUARK_N;
 
 
 	if (boardtype>=0 && boardtype<BOARD_TYPE_MAX) {

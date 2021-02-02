@@ -1,0 +1,53 @@
+Allwinner HDMI Transmitter
+==========================
+
+The Allwinner HDMI transmitters are included in the SoCs.
+They support audio and video.
+
+Required properties:
+ - #address-cells : should be <1>
+ - #size-cells : should be <0>
+ - compatible : should be one of
+		"allwinner,sun8i-a83t-hdmi"
+		"allwinner,sun8i-h3-hdmi"
+ - clocks : phandles to the HDMI clocks as described in
+	Documentation/devicetree/bindings/clock/clock-bindings.txt
+ - clock-names : must be
+		"gate" : bus gate
+		"clock" : streaming clock
+		"ddc-clock" : DDC clock
+ - resets : One or two phandles to the HDMI resets
+ - reset-names : when 2 phandles, must be
+		"hdmi0" and "hdmi1"
+
+Required nodes:
+ - port: Audio and video input port nodes with endpoint definitions
+	as defined in Documentation/devicetree/bindings/graph.txt.
+	port@0 is video and port@1 is audio.
+
+Example:
+
+	hdmi: hdmi@01ee0000 {
+		compatible = "allwinner,sun8i-a83t-hdmi";
+		reg = <0x01ee0000 0x20000>;
+		clocks = <&ccu CLK_BUS_HDMI>, <&ccu CLK_HDMI>,
+			 <&ccu CLK_HDMI_DDC>;
+		clock-names = "gate", "clock", "ddc-clock";
+		resets = <&ccu RST_HDMI0>, <&ccu RST_HDMI1>;
+		reset-names = "hdmi0", "hdmi1";
+		...
+		#address-cells = <1>;
+		#size-cells = <0>;
+		port@0 {			/* video */
+			reg = <0>;
+			hdmi_lcd1: endpoint {
+				remote-endpoint = <&lcd1_hdmi>;
+			};
+		};
+		port@1 {			/* audio */
+			reg = <1>;
+			hdmi_i2s2: endpoint {
+				remote-endpoint = <&i2s2_hdmi>;
+			};
+		};
+	};

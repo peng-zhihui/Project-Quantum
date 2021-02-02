@@ -2,7 +2,7 @@
 #define _NANOPI_BOARDTYPE_H
 
 #if defined(CONFIG_MACH_SUN8I_H3_NANOPI)
-#define BOARD_TYPE_MAX                    (10)
+#define BOARD_TYPE_MAX                    (20)
 #elif defined(CONFIG_MACH_SUN50I_H5_NANOPI)
 #define BOARD_TYPE_MAX                    (6)
 #endif
@@ -28,6 +28,8 @@
 #define BOARD_TYPE_NANOPI_DUO2            (8)
 #define BOARD_TYPE_NANOPI_R1              (9)
 
+#define BOARD_TYPE_UNIT        (10)
+#define BOARD_TYPE_QUARK_N        (11)
 
 #define BOARD_TYPE_NANOPI_NEO_CORE2       (0)       // 00
 #define BOARD_TYPE_NANOPI_NEO2            (1)       // 01

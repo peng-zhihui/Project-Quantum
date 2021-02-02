@@ -1,0 +1,37 @@
+ifeq ($(wildcard $(src)/compat/compat.h),)
+ccflags-y += -include $(srctree)/$(src)/compat/compat.h
+else
+ccflags-y += -include $(src)/compat/compat.h
+endif
+
+ifeq ($(wildcard $(srctree)/include/linux/ptr_ring.h),)
+ccflags-y += -I$(src)/compat/ptr_ring/include
+endif
+
+ifeq ($(wildcard $(srctree)/include/linux/siphash.h),)
+ccflags-y += -I$(src)/compat/siphash/include
+wireguard-y += compat/siphash/siphash.o
+endif
+
+ifeq ($(wildcard $(srctree)/include/net/dst_cache.h),)
+ccflags-y += -I$(src)/compat/dst_cache/include
+wireguard-y += compat/dst_cache/dst_cache.o
+endif
+
+ifeq ($(wildcard $(srctree)/arch/x86/include/asm/fpu/api.h),)
+ccflags-y += -I$(src)/compat/fpu/include
+endif
+
+ifeq ($(wildcard $(srctree)/arch/x86/include/asm/simd.h),)
+ccflags-y += -I$(src)/compat/simd/include
+endif
+
+ifeq ($(wildcard $(srctree)/include/net/udp_tunnel.h),)
+ccflags-y += -I$(src)/compat/udp_tunnel/include
+wireguard-y += compat/udp_tunnel/udp_tunnel.o
+endif
+
+ifeq ($(shell grep -F "int crypto_memneq" "$(srctree)/include/crypto/algapi.h"),)
+ccflags-y += -include $(src)/compat/memneq/include.h
+wireguard-y += compat/memneq/memneq.o
+endif

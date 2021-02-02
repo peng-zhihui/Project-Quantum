@@ -1,0 +1,6 @@
+#include "sun8i-h3-nanopi.dtsi"
+
+/ {
+	model = "Pengzhihui Unit-Sever";
+	compatible = "friendlyelec,nanopi-neo-core", "allwinner,sun8i-h3";
+};

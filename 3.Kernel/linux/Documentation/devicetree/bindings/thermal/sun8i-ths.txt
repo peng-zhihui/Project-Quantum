@@ -1,0 +1,24 @@
+* Thermal sensor driver for Allwinner H3 SoC
+
+Required properties:
+- compatible : "allwinner,sun8i-h3-ths"
+- reg : Address range of the thermal sensor registers
+- resets : Must contain phandles to reset controls matching the entries
+  of the names
+- reset-names : Must include the name "ahb"
+- clocks : Must contain phandles to clock controls matching the entries
+  of the names
+- clock-names : Must contain "ahb" for the bus gate and "ths" for the THS
+  clock
+
+Example:
+ths: ths@01c25000 {
+	#thermal-sensor-cells = <0>;
+	compatible = "allwinner,sun8i-h3-ths";
+	reg = <0x01c25000 0x400>;
+	interrupts = <GIC_SPI 63 IRQ_TYPE_LEVEL_HIGH>;
+	resets = <&bus_rst 136>;
+	reset-names = "ahb";
+	clocks = <&bus_gates 72>, <&ths_clk>;
+	clock-names = "ahb", "ths";
+};

@@ -1,0 +1,83 @@
+Allwinner sun8i Display Engine 2 subsystem
+==========================================
+
+The Allwinner DE2 subsystem contains a display controller (DE2),
+one or two LCD controllers (TCON) and their external interfaces.
+
+Display controller
+==================
+
+Required properties:
+
+- compatible: value should be one of the following
+		"allwinner,sun8i-a83t-display-engine"
+		"allwinner,sun8i-h3-display-engine"
+
+- clocks: must include clock specifiers corresponding to entries in the
+		clock-names property.
+
+- clock-names: must contain
+		"gate": DE bus gate
+		"clock": DE clock
+
+- resets: phandle to the reset of the device
+
+- ports: phandle's to the LCD ports
+
+LCD controller
+==============
+
+Required properties:
+
+- compatible: should be
+		"allwinner,sun8i-a83t-tcon"
+
+- clocks: must include clock specifiers corresponding to entries in the
+		clock-names property.
+
+- clock-names: must contain
+		"gate": TCON bus gate
+		"clock": TCON pixel clock
+
+- resets: phandle to the reset of the device
+
+- port: port node with endpoint definitions as defined in
+	Documentation/devicetree/bindings/media/video-interfaces.txt
+
+Example:
+
+	de: de-controller@01000000 {
+		compatible = "allwinner,sun8i-h3-display-engine";
+		...
+		clocks = <&&ccu CLK_BUS_DE>, <&ccu CLK_DE>;
+		clock-names = "gate", "clock";
+		resets = <&ccu RST_BUS_DE>;
+		ports = <&lcd0_p>;
+	};
+
+	lcd0: lcd-controller@01c0c000 {
+		compatible = "allwinner,sun8i-a83t-tcon";
+		...
+		clocks = <&ccu CLK_BUS_TCON0>, <&ccu CLK_TCON0>;
+		clock-names = "gate", "clock";
+		resets = <&ccu RST_BUS_TCON0>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+		lcd0_p: port {
+			lcd0_ep: endpoint {
+				remote-endpoint = <&hdmi_ep>;
+			};
+		};
+	};
+
+	hdmi: hdmi@01ee0000 {
+		...
+		#address-cells = <1>;
+		#size-cells = <0>;
+		port {
+			hdmi_ep: endpoint {
+				remote-endpoint = <&lcd0_ep>;
+			};
+		};
+	};
+

@@ -1,0 +1,68 @@
+/*
+ * Device Tree overlay for 1'3 TFT
+ */
+
+/dts-v1/;
+/plugin/;
+#include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/interrupt-controller/irq.h>
+/ {
+	compatible = "allwinner,sun8i-h3";
+
+	fragment@0 {
+		target = <&spi0>;
+		__overlay__ {
+			status = "okay";
+		};
+	};
+
+	fragment@1 {
+		target = <&uart2>;
+		__overlay__ {
+			status = "disabled";
+		};
+	};
+
+	fragment@2 {
+		target = <&spidev0>;
+		__overlay__ {
+			status = "disabled";
+		};
+	};
+
+	fragment@3 {
+		target = <&pio>;
+		__overlay__ {
+			spi0_cs_pins: spi0_cs_pins {
+				pins = "PC3";
+				function = "gpio_out";
+			};
+		};
+	};
+
+	fragment@4 {
+		target = <&spi0>;
+		__overlay__ {
+			/* needed to avoid dtc warning */
+			#address-cells = <1>;
+			#size-cells = <0>;
+			pinctrl-0 = <&spi0_pins &spi0_cs_pins>;
+			cs-gpios = <&pio 2 3 GPIO_ACTIVE_HIGH>;
+
+			pitft: pitft@0{
+				compatible = "sitronix,st7789vw";
+				reg = <0>;
+				status = "okay";
+
+				spi-max-frequency = <50000000>;
+				rotate = <0>;
+				fps = <33>;
+				buswidth = <8>;
+				dc-gpios = <&pio 0 1 GPIO_ACTIVE_HIGH>;	 /* PA1 */
+				reset-gpios = <&pio 6 11 GPIO_ACTIVE_HIGH>; /* PG11 */
+				led-gpios = <&pio 0 6 GPIO_ACTIVE_LOW>;	 /* PA6 */
+				debug = <0x0>;
+			};
+		};
+	};
+};
