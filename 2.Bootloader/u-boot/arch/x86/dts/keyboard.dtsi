@@ -1,5 +1,0 @@
-/ {
-	keyboard {
-		compatible = "intel,i8042-keyboard";
-	};
-};

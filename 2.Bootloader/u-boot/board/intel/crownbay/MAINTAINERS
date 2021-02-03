@@ -1,6 +1,0 @@
-INTEL CROWNBAY BOARD
-M:	Bin Meng <bmeng.cn@gmail.com>
-S:	Maintained
-F:	board/intel/crownbay/
-F:	include/configs/crownbay.h
-F:	configs/crownbay_defconfig

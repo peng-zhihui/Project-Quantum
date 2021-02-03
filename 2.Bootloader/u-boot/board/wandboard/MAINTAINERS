@@ -1,6 +1,0 @@
-WANDBOARD BOARD
-M:	Fabio Estevam <fabio.estevam@nxp.com>
-S:	Maintained
-F:	board/wandboard/
-F:	include/configs/wandboard.h
-F:	configs/wandboard_defconfig

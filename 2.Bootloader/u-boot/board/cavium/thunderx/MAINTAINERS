@@ -1,6 +1,0 @@
-THUNDERX BOARD
-M:	Sergey Temerkhanov <s.temerkhanov@gmail.com>
-S:	Maintained
-F:	board/cavium/thunderx/
-F:	include/configs/thunderx_88xx.h
-F:	configs/thunderx_88xx_defconfig
