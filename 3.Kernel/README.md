@@ -12,3 +12,7 @@ $ make menuconfig ARCH=arm CROSS_COMPILE=arm-linux-
 $ make zImage dtbs ARCH=arm CROSS_COMPILE=arm-linux-
 ```
 
+> 也可以先从网盘下载：
+>
+> 链接：https://pan.baidu.com/s/1PNr0rAfTOndtmrEEMeSpig 
+> 提取码：tt8s 
