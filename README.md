@@ -58,6 +58,11 @@
 
 
 
-#### 各个模块（硬件、软件、镜像）的详细说明可以进入相关文件夹内查看README.md（待持续补充）。
+#### 各个模块（硬件、软件、镜像）的详细说明可以进入相关文件夹内查看README.md
+
+#### Quark-N的使用教程可以参考这个：
+
+[quark-n: Quark-N的使用小技巧 (gitee.com)](https://gitee.com/coolflyreg163/quark-n)
 
 ## 
+
