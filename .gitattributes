@@ -1,1 +1,16 @@
 3.Kernel/kernel.tar.gz filter=lfs diff=lfs merge=lfs -text
+
+# https://github.com/peng-zhihui/ElectronBot/discussions/206
+# https://gist.github.com/TitanRGB/61c37bf71159cc9a511558ec7c218339
+*.PrjPCBStructure linguist-detectable=true
+*.OutJob linguist-detectable=true
+*.PcbDoc linguist-detectable=true
+*.PrjPCB linguist-detectable=true
+*.SchDoc linguist-detectable=true
+*.outjob linguist-detectable=true
+*.pcbdoc linguist-detectable=true
+*.prjpcb linguist-detectable=true
+*.schdoc linguist-detectable=true
+*.html linguist-detectable=false
+*pde linguist-detectable=false
+*.GPT linguist-detectable=true
